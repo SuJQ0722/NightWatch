@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NightWatch: Proactive Perception for Computer-Use Agents</title>
+  <meta name="description" content="NightWatch gives any computer-use agent proactive perception: a 0.8B watcher interrupts stale reasoning, voids stale actions, and wakes the agent as soon as the screen settles.">
+  <meta property="og:title" content="NightWatch: Don't Sleep, Keep Watch">
+  <meta property="og:description" content="Proactive perception for computer-use agents: interrupt, void, wake.">
+  <meta property="og:image" content="static/images/nightwatch-banner.png">
+  <link rel="icon" href="static/images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+
+<header class="hero">
+  <img class="banner" src="static/images/nightwatch-banner.png" alt="NightWatch">
+  <h1>Don’t Sleep, Keep Watch:<br>Proactive Perception for Computer-Use Agents</h1>
+  <p class="authors">
+    <span>Jiaqi Su<sup>1</sup></span>
+    <span>Jiejing Shao<sup>2</sup></span>
+    <span>Yichen Liu<sup>3</sup></span>
+    <span>Longkai Huang<sup>4</sup></span>
+    <span>Haiyan Yin<sup>2</sup></span>
+  </p>
+  <p class="affils">
+    <span><sup>1</sup>National University of Singapore</span>
+    <span><sup>2</sup>Agency for Science, Technology and Research (A*STAR)</span>
+    <span><sup>3</sup>SenseTime</span>
+    <span><sup>4</sup>Hong Kong Baptist University</span>
+  </p>
+  <nav class="buttons">
+    <a class="btn disabled" aria-disabled="true" title="coming soon"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 2.5h8l4.5 4.5v14.5H6zM14 2.5V7h4.5M9 12h7M9 16h7"/></svg>Paper <small>(soon)</small></a>
+    <a class="btn" href="https://github.com/SuJQ0722/NightWatch"><svg class="ico" viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Code</a>
+    <a class="btn" href="https://huggingface.co/nullptr04/NightWatch-0.8B"><span class="ico">🤗</span>Model</a>
+    <a class="btn" href="https://huggingface.co/datasets/nullptr04/NightWatch-Data"><span class="ico">🤗</span>Data</a>
+  </nav>
+
+  <figure class="hero-video card">
+    <video src="static/videos/osworld_interrupt_terminal.mp4" poster="static/videos/osworld_interrupt_terminal.jpg"
+           autoplay muted loop playsinline preload="metadata"></video>
+    <figcaption>Four agents with the same model (MiMo-V2.6-Flash), prompt and action space on an OSWorld task; only the
+      perception layer differs. While the agent is still reasoning about a half-drawn screen, the window finishes
+      opening: NightWatch (bottom right) cancels the stale reasoning and the agent re-plans on the current screen.
+      It is the only one of the four to finish (7 steps, 90&nbsp;s), and it solves this task in all three paper runs,
+      against at most one for each baseline.</figcaption>
+  </figure>
+</header>
+
+<main>
+
+<section class="tldr card dashed">
+  <h2 class="tag">TL;DR</h2>
+  <p>Computer-use agents look at the screen on their own clock: take a screenshot, reason, act, sleep for a fixed
+    delay, repeat. On a live screen this goes wrong both ways. The agent reasons about a screen that has already
+    changed, and it sleeps through a page that loaded long ago. <b>NightWatch</b> lets the screen decide when the
+    agent looks. A 0.8B watcher reads the screen as a stream and, through three fixed rules, <b class="c-int">interrupts</b>
+    reasoning that a change has made obsolete, <b class="c-void">voids</b> a click whose target is gone, and
+    <b class="c-wake">wakes</b> the agent the moment the screen settles. The agent itself is not modified.</p>
+  <div class="stats">
+    <div class="stat"><b>−33%</b><span>non-reasoning time<br>on OSWorld</span></div>
+    <div class="stat"><b>−53%</b><span>wasted time<br>on OSWorld</span></div>
+    <div class="stat"><b>39.5 → 44.2</b><span>success (%) on<br>DynaCU-Bench</span></div>
+    <div class="stat"><b>0.8B</b><span>watcher, &gt;30× smaller<br>than a System-1 baseline</span></div>
+  </div>
+</section>
+
+<section>
+  <h2 class="band band-int">Three proactive interventions</h2>
+  <div class="trio">
+    <article class="iv iv-int">
+      <header><img src="static/images/icon-interrupt.svg" alt=""><h3>Interrupt</h3><span>during reasoning</span></header>
+      <p>A dialog, an error or a new page appears while the agent is still reasoning about the old screen. NightWatch
+        cancels the generation, and the agent re-plans on the current screen.</p>
+    </article>
+    <article class="iv iv-void">
+      <header><img src="static/images/icon-void.svg" alt=""><h3>Void</h3><span>before dispatch</span></header>
+      <p>The element the agent chose to click has moved, been covered, or disappeared. NightWatch discards the action
+        before it lands, instead of letting it hit the wrong target.</p>
+    </article>
+    <article class="iv iv-wake">
+      <header><img src="static/images/icon-wake.svg" alt=""><h3>Wake</h3><span>after execution</span></header>
+      <p>The fixed sleep after each action is replaced: NightWatch wakes the agent as soon as the screen has settled,
+        learned from hindsight labels rather than from stillness alone.</p>
+    </article>
+  </div>
+</section>
+
+<section id="demos">
+  <h2 class="band band-mon">Demos</h2>
+  <p class="lead">Each video shows four real episodes side by side, with the same agent (MiMo-V2.6-Flash), prompt,
+    action space and step budget. Each panel shows the agent's state and its intervention log, with a timeline
+    coloured by what the loop was doing. Playback slows to 1× around NightWatch's interventions. The closing card
+    reports the episode times and each method's success over the three paper runs of that task.</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" class="tab active" data-case="2"><img src="static/images/icon-interrupt.svg" alt="">Interrupt · OSWorld</button>
+    <button role="tab" class="tab" data-case="1"><img src="static/images/icon-void.svg" alt="">Void · DynaCU</button>
+    <button role="tab" class="tab" data-case="0"><img src="static/images/icon-interrupt.svg" alt="">Interrupt · DynaCU</button>
+    <button role="tab" class="tab" data-case="3"><img src="static/images/icon-wake.svg" alt="">Wake · OSWorld</button>
+  </div>
+
+  <div class="demo card" data-case="2">
+    <video controls muted playsinline preload="none" poster="static/videos/osworld_interrupt_terminal.jpg"
+           src="static/videos/osworld_interrupt_terminal.mp4"></video>
+    <div class="demo-text">
+      <h3>Interrupt: the screen changed while the agent was reasoning</h3>
+      <p class="task">OSWorld-Verified · “Run <code>ls</code> in /home/user and save a screenshot of the terminal as
+        ls.png on the Desktop.”</p>
+      <p>The Files window finished opening while the agent was still reasoning about the half-drawn screen.
+        NightWatch cancelled that reasoning, and the agent re-planned on the current screen and finished in 7 steps.
+        Over the three paper runs: NightWatch 3/3, Vanilla 1/3, AOI 0/3, PUSV 1/3.</p>
+      <p class="src">Paper runs, run 2 of 3. Screenshot replay: each frame is a screenshot the agent received, shown
+        at its logged time (OSWorld runs were not screen-recorded).</p>
+    </div>
+  </div>
+
+  <div class="demo card" data-case="1" hidden>
+    <video controls muted playsinline preload="none" poster="static/videos/dynacu_void_colormatch.jpg"
+           src="static/videos/dynacu_void_colormatch.mp4"></video>
+    <div class="demo-text">
+      <h3>Void: the swatch moved before the click landed</h3>
+      <p class="task">DynaCU-Bench · “Click the matching color swatch when it appears among rotating options.”</p>
+      <p>The swatches rotate while the agent reasons. Twice, the swatch the agent chose had already moved when the
+        click was due: NightWatch voided the click instead of hitting the wrong colour, and the agent re-planned on
+        the current screen. Over the three paper runs: NightWatch 3/3, Vanilla 3/3, AOI 2/3, PUSV 2/3.</p>
+      <p class="src">Continuous screen recordings. NightWatch: paper configuration, episode chosen to show the
+        intervention; baselines: the first demo recording of each method.</p>
+    </div>
+  </div>
+
+  <div class="demo card" data-case="0" hidden>
+    <video controls muted playsinline preload="none" poster="static/videos/dynacu_interrupt_noc.jpg"
+           src="static/videos/dynacu_interrupt_noc.mp4"></video>
+    <div class="demo-text">
+      <h3>Interrupt: a server went critical mid-thought</h3>
+      <p class="task">DynaCU-Bench · “Three servers will go critical at different times. Acknowledge each within 5
+        seconds of it going red.”</p>
+      <p>When the next server turned red while the agent was still reasoning about the old screen, NightWatch
+        cancelled that reasoning at once, so the agent saw the new alarm in time. Over the three paper runs of this
+        task: NightWatch 3/3, Vanilla 2/3, AOI 1/3, PUSV 1/3.</p>
+      <p class="src">Continuous screen recordings from one demo session with the paper configuration; the first
+        recording of each method.</p>
+    </div>
+  </div>
+
+  <div class="demo card" data-case="3" hidden>
+    <video controls muted playsinline preload="none" poster="static/videos/osworld_wake_pageloads.jpg"
+           src="static/videos/osworld_wake_pageloads.mp4"></video>
+    <div class="demo-text">
+      <h3>Wake: look as soon as the page has loaded</h3>
+      <p class="task">OSWorld-Verified · “Browse list of Civil Division forms.”</p>
+      <p>All four agents solve this run. The agent writes sleeps into its own actions while pages load; NightWatch
+        strips them and wakes the agent as soon as the screen settles. Outside reasoning, a step costs 4.1&nbsp;s
+        with NightWatch against 15.1&nbsp;s (Vanilla), 9.4&nbsp;s (AOI) and 14.3&nbsp;s (PUSV); NightWatch finishes
+        in 193&nbsp;s.</p>
+      <p class="src">Paper runs, run 3 of 3. Screenshot replay: each frame is a screenshot the agent received, shown
+        at its logged time.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2 class="band band-iv">How it works</h2>
+  <figure class="card fig">
+    <a href="static/images/method.png"><img src="static/images/method.webp" alt="Overview of NightWatch" loading="lazy"></a>
+    <figcaption><b>Left:</b> the screen is watched as a stream; NightWatch-0.8B reads recent frames and the pending
+      action and answers every question of a fixed, generic bank with a probability. <b>Middle:</b> fixed thresholds
+      turn these probabilities into the three interventions on an unmodified agent. <b>Right:</b> the watcher is
+      trained offline on decision points from generated tasks and synthetic interfaces, with teacher, gold, and
+      hindsight labels. No benchmark task, file, or trajectory is used.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2 class="band band-tr">Results</h2>
+  <figure class="card fig">
+    <img src="static/images/results.webp" alt="Results at a glance" loading="lazy">
+    <figcaption><b>(a)</b> On OSWorld-Verified (100 tasks, 3 runs), NightWatch spends a third less time outside
+      reasoning, with success on par. <b>(b)</b> It cuts premature observations and stale actions. <b>(c)</b> On
+      DynaCU-Bench, it is best or tied for best in four of five categories.</figcaption>
+  </figure>
+  <figure class="card fig">
+    <img src="static/images/pareto_mimo.webp" alt="Success against cost and time" loading="lazy">
+    <figcaption>Success against agent API cost and non-reasoning time on OSWorld-Verified: NightWatch lies outside
+      the region dominated by the baselines on both axes.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2 class="band band-mon">Citation</h2>
+  <div class="card dashed bib">
+    <button class="copy" type="button">Copy</button>
+<pre><code>@article{su2026nightwatch,
+  title  = {Don't Sleep, Keep Watch: Proactive Perception for Computer-Use Agents},
+  author = {Su, Jiaqi and Shao, Jiejing and Liu, Yichen and Huang, Longkai and Yin, Haiyan},
+  year   = {2026},
+  note   = {arXiv preprint, coming soon}
+}</code></pre>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <img src="static/images/favicon.png" alt="" width="28" height="28">
+  NightWatch · <a href="https://github.com/SuJQ0722/NightWatch">code</a> ·
+  <a href="https://huggingface.co/nullptr04/NightWatch-0.8B">model</a> ·
+  <a href="https://huggingface.co/datasets/nullptr04/NightWatch-Data">data</a>
+</footer>
+
+<script src="static/js/main.js"></script>
+</body>
+</html>
