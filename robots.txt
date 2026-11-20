@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sujq0722.github.io/NightWatch/sitemap.xml

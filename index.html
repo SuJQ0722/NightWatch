@@ -4,10 +4,41 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NightWatch: Proactive Perception for Computer-Use Agents</title>
-  <meta name="description" content="NightWatch gives any computer-use agent proactive perception: a 0.8B watcher interrupts stale reasoning, voids stale actions, and wakes the agent as soon as the screen settles.">
+  <meta name="description" content="NightWatch gives any computer-use (GUI) agent proactive perception: a 0.8B Jev-style System-1 decision model watches the screen and interrupts stale reasoning, voids stale clicks, and wakes the agent as soon as the screen settles. -33% non-reasoning time on OSWorld-Verified, 39.5 to 44.2% success on DynaCU-Bench.">
+  <meta name="keywords" content="NightWatch, computer-use agent, CUA, GUI agent, desktop agent, proactive perception, System-1, System-1 decision model, Jev, Jev-style, Jev System-1, watcher model, OSWorld, OSWorld-Verified, DynaCU-Bench, AOI, PUSV, interrupt, void, wake, stale action, perception-action gap, Hermes Agent plugin, MiMo, vision-language model">
+  <meta name="author" content="Jiaqi Su, Jiejing Shao, Yichen Liu, Longkai Huang, Haiyan Yin">
+  <link rel="canonical" href="https://sujq0722.github.io/NightWatch/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sujq0722.github.io/NightWatch/">
+  <meta property="og:site_name" content="NightWatch">
   <meta property="og:title" content="NightWatch: Don't Sleep, Keep Watch">
-  <meta property="og:description" content="Proactive perception for computer-use agents: interrupt, void, wake.">
-  <meta property="og:image" content="static/images/nightwatch-banner.png">
+  <meta property="og:description" content="Proactive perception for computer-use agents: a 0.8B Jev-style System-1 watcher that interrupts, voids and wakes.">
+  <meta property="og:image" content="https://sujq0722.github.io/NightWatch/static/images/nightwatch-banner.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="NightWatch: Don't Sleep, Keep Watch">
+  <meta name="twitter:description" content="A 0.8B Jev-style System-1 watcher gives computer-use agents proactive perception: interrupt, void, wake.">
+  <meta name="twitter:image" content="https://sujq0722.github.io/NightWatch/static/images/nightwatch-banner.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {"@type": "ScholarlyArticle", "headline": "Don't Sleep, Keep Watch: Proactive Perception for Computer-Use Agents",
+        "url": "https://sujq0722.github.io/NightWatch/", "image": "https://sujq0722.github.io/NightWatch/static/images/nightwatch-banner.png", "datePublished": "2026-11",
+        "keywords": "computer-use agent, GUI agent, proactive perception, System-1 decision model, Jev, OSWorld, DynaCU-Bench",
+        "author": [
+          {"@type": "Person", "name": "Jiaqi Su", "affiliation": "National University of Singapore"},
+          {"@type": "Person", "name": "Jiejing Shao", "affiliation": "Agency for Science, Technology and Research (A*STAR)"},
+          {"@type": "Person", "name": "Yichen Liu", "affiliation": "SenseTime"},
+          {"@type": "Person", "name": "Longkai Huang", "affiliation": "Hong Kong Baptist University"},
+          {"@type": "Person", "name": "Haiyan Yin", "affiliation": "Agency for Science, Technology and Research (A*STAR)"}]},
+      {"@type": "SoftwareSourceCode", "name": "NightWatch", "codeRepository": "https://github.com/SuJQ0722/NightWatch",
+        "programmingLanguage": "Python", "license": "https://www.apache.org/licenses/LICENSE-2.0"},
+      {"@type": "Dataset", "name": "NightWatch training data", "url": "https://huggingface.co/datasets/nullptr04/NightWatch-Data",
+        "description": "Decision points from generated desktop tasks, synthetic web pages and hindsight settledness labels for training a System-1 watcher. No benchmark tasks or files.",
+        "license": "https://www.apache.org/licenses/LICENSE-2.0"}
+    ]
+  }
+  </script>
   <link rel="icon" href="static/images/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,6 +69,10 @@
     <a class="btn" href="https://huggingface.co/nullptr04/NightWatch-0.8B"><span class="ico">🤗</span>Model</a>
     <a class="btn" href="https://huggingface.co/datasets/nullptr04/NightWatch-Data"><span class="ico">🤗</span>Data</a>
   </nav>
+  <p class="chips">
+    <span class="chip"><img src="static/images/icon-wake.svg" alt="">0.8B Jev-style System-1 watcher</span>
+    <span class="chip"><img src="static/images/icon-interrupt.svg" alt="">Plug-in for any CUA · Hermes Agent plugin soon</span>
+  </p>
 
   <figure class="hero-video card">
     <video src="static/videos/osworld_interrupt_terminal.mp4" poster="static/videos/osworld_interrupt_terminal.jpg"
@@ -188,6 +223,57 @@
     <figcaption>Success against agent API cost and non-reasoning time on OSWorld-Verified: NightWatch lies outside
       the region dominated by the baselines on both axes.</figcaption>
   </figure>
+</section>
+
+<section id="system1">
+  <h2 class="band band-iv">Big model thinks, small model watches</h2>
+  <div class="card dashed s1">
+    <p>NightWatch splits the work between two models that run at different speeds, like System 2 and System 1.</p>
+    <div class="duo">
+      <div class="role role-big">
+        <h3>The agent · System 2</h3>
+        <p>A large vision-language model (MiMo-V2.6-Flash, Qwen3.8-27B, ...) plans and acts. It is slow: one step
+          takes seconds of reasoning, and it sees the screen only through the screenshots it asks for. NightWatch does
+          not change it: same model, prompt and action space.</p>
+      </div>
+      <div class="role role-small">
+        <h3>The watcher · System 1</h3>
+        <p>NightWatch-0.8B is a Jev-style System-1 decision model. It reads the latest frames and the pending action
+          once and returns a probability for every question of a fixed bank (has a dialog appeared, is the target
+          still there, has the screen settled), without generating text, so it can keep up with the screen.</p>
+      </div>
+    </div>
+    <p><b>How they work together.</b> The watcher never chooses what the agent does; it only decides when the agent
+      should look and whether its current thought or action still holds. Fixed thresholds turn its answers into the
+      three interventions: <b class="c-int">interrupt</b> the agent's reasoning when the screen changes under it,
+      <b class="c-void">void</b> an action whose target has gone, and <b class="c-wake">wake</b> the agent as soon as
+      the screen has settled. The small model keeps the large one in sync with the screen at a fraction of its cost:
+      in the paper's ablation, the 0.8B watcher is faster and more successful than a hosted Jev API watcher and than a
+      System-1 decision model more than 30× its size.</p>
+  </div>
+</section>
+
+<section id="faq">
+  <h2 class="band band-tr">FAQ</h2>
+  <div class="card dashed faq">
+    <details open><summary>What problem does NightWatch solve for computer-use agents?</summary>
+      <p>GUI agents perceive the screen through discrete screenshots on their own clock, so they reason about screens
+        that have already changed (stale actions) and sleep through screens that are ready (idle waiting). NightWatch
+        lets the screen decide when the agent looks.</p></details>
+    <details><summary>Do I need to change my agent, model or prompt?</summary>
+      <p>No. NightWatch sits in the harness: it cancels the agent's model call, drops a pending action, or ends a
+        wait. The agent's model, prompt and action space stay unchanged.</p></details>
+    <details><summary>How is NightWatch related to Jev?</summary>
+      <p>NightWatch-0.8B is a Jev-style System-1 decision model: like Jev, it answers a set of typed questions with
+        probabilities in a single pass instead of generating text, which is what makes watching every frame cheap.
+        In the paper it is compared with the hosted Jev API used as the watcher.</p></details>
+    <details><summary>Which benchmarks and agents were evaluated?</summary>
+      <p>OSWorld-Verified (100 tasks, 3 runs) and DynaCU-Bench (49 dynamic web tasks, 3 runs), with MiMo-V2.6-Flash
+        and Qwen3.8-27B agents, against Vanilla, AOI and PUSV under the same screenshot-only input.</p></details>
+    <details><summary>Can I use it in my own agent framework?</summary>
+      <p>The code and the 0.8B watcher are open (Apache-2.0). A plugin for Hermes Agent's computer use is in
+        preparation.</p></details>
+  </div>
 </section>
 
 <section>

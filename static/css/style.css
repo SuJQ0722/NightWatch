@@ -153,3 +153,26 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .btn { transition: none; }
 }
+
+/* hero chips and FAQ */
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: -14px 0 26px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font: 700 15px var(--hand); color: var(--iv);
+  background: var(--iv-fill); border: 2px solid var(--iv-border); border-radius: 999px; padding: 4px 14px;
+}
+.chip img { width: 18px; height: 18px; }
+.faq details { border-bottom: 1px dashed var(--line); padding: 8px 0; }
+.faq details:last-child { border-bottom: none; }
+.faq summary { font: 700 18px var(--hand); cursor: pointer; color: var(--ink); }
+.faq p { margin: 6px 0 2px; }
+
+/* big / small model section */
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 6px 0 14px; }
+.role { border-radius: 16px; padding: 12px 16px; border: 2px solid; }
+.role h3 { font: 700 21px var(--hand); margin: 0 0 4px; }
+.role p { margin: 0; font-size: 16px; }
+.role-big { background: var(--tr-fill); border-color: var(--tr-border); } .role-big h3 { color: var(--tr); }
+.role-small { background: var(--iv-fill); border-color: var(--iv-border); } .role-small h3 { color: var(--iv); }
+.s1 > p { margin: 0 0 10px; }
+@media (max-width: 820px) { .duo { grid-template-columns: 1fr; } }
