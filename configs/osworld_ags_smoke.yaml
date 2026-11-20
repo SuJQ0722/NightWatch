@@ -1,0 +1,12 @@
+# One real OSWorld-Verified task on the AGS sandbox (OSWORLD_PROVIDER=ags), scripted agent (no LLM key),
+# real System-1 (perception server). Infrastructure check: sandbox, task setup, frame stream, waiters, evaluator.
+extends: base
+experiment: osworld_ags_smoke
+repeats: 1
+workers: 1
+agent: {kind: scripted_osworld, latency_s: 2.0}
+tasks: {meta: evaluation_examples/test_small.json, domains: [os], ids: [5812b315-e7bd-4265-b51f-863c02174c28]}
+episode: {settle_after_reset_s: 10, settle_before_eval_s: 5}
+limits: {max_steps: 50, max_vlm_calls: 120, max_loop_s: 3600}
+frames: {hz: 10, record: true, record_max_side: 960}
+run_methods: [fixed_default, nightwatch]

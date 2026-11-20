@@ -1,0 +1,12 @@
+# DynaCU pipeline check without any key / GPU: real Chromium + real task pages, scripted agent, simulated
+# System-1 is not possible here (no ground truth), so the event-driven methods use the perception server or
+# fall back to pixels when it is down. Pipeline check only, never a result.
+extends: dynacu
+experiment: dynacu_smoke
+repeats: 1
+workers: 3
+agent: {kind: scripted_web, latency_s: 1.5}
+system1: {backend: none}
+tasks: {subset: visual, ids: [F-E1, D-E1, E-E1]}
+limits: {max_steps: 6, max_vlm_calls: 12, max_loop_s: 60}
+run_methods: [fixed_aoi, pixel_stable, nightwatch_post]

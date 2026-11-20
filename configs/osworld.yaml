@@ -1,0 +1,19 @@
+# OSWorld-Verified evaluation: 100 sampled tasks (configs/tasks/osworld_100.json), three repeats.
+# Baselines and NightWatch share the agent, prompt, action space and step budget; only perception timing differs.
+extends: base
+experiment: osworld
+repeats: 3
+workers: 6
+tasks: {meta: ../../configs/tasks/osworld_100.json}   # relative to third_party/OSWorld
+limits: {max_steps: 100, max_vlm_calls: 240, max_loop_s: 7200}
+agent:
+  max_tokens: 1500
+  temperature: 0.5
+  top_p: 0.9
+  obs_size: [1280, 720]   # screenshots sent at 1280x720; clicks are mapped back to the screen
+frames: {save_obs: true, record: false}
+method_defaults:
+  post_cfg: {no_effect_timeout_s: 1.0}
+methods:
+  nightwatch_full: {base: nightwatch_d3lite_settle_s1wake}
+run_methods: [fixed_0, aoi_visual, pusv, nightwatch_full]

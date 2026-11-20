@@ -1,0 +1,15 @@
+# Offline pipeline check: simulated desktop + scripted agent + simulated System-1. No VM, no key, no GPU.
+# Numbers from this config are never results.
+extends: base
+experiment: smoke
+repeats: 1
+workers: 4
+env: {kind: sim, sim: {steps: 3}}
+agent: {kind: sim, latency_s: 1.0, jitter: 0.3}
+system1: {backend: sim}
+tasks: {n: 4}
+episode: {settle_after_reset_s: 0, settle_before_eval_s: 0}
+limits: {max_steps: 20, max_vlm_calls: 40, max_loop_s: 120}
+frames: {hz: 10, record: false}
+stage1: {benign_regions: [[0.9, 0.0, 1.0, 0.06]]}   # the simulated clock
+run_methods: [fixed_0.5, fixed_2, pixel_stable, nightwatch_post, nightwatch]

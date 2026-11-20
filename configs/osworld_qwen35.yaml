@@ -1,0 +1,31 @@
+# OSWorld with the upstream Qwen3.5-VL agent: fixed_0 calls the upstream run_single_example + DesktopEnv.step.
+# Set AGENT_BASE_URL / AGENT_MODEL / AGENT_API_KEY in .env for the Qwen endpoint.
+extends: base
+experiment: osworld_qwen35
+repeats: 3
+workers: 3
+tasks: {meta: ../../configs/tasks/osworld_100.json}   # relative to third_party/OSWorld
+agent:
+  kind: qwen35
+  max_tokens: 32768
+  temperature: 0.0
+  top_p: 0.9
+  history_n: 100
+  image_max: 20
+  fold_size: 10
+  coordinate_type: relative
+  extra_body: {}          # no provider / thinking settings inherited from .env
+  retries: 5
+frames: {save_obs: true, record: false}
+limits: {max_steps: 50}
+methods:
+  fixed_0:
+    episode_loop: osworld_qwen35_native_v1
+    post: fixed
+    sleep: 0.0
+    strip_sleep: false
+    interrupt: false
+    invalidate: false
+# Event-driven methods may be selected explicitly; they share the Qwen agent,
+# but use NightWatch's loop and are not labelled native OSWorld.
+run_methods: [fixed_0]

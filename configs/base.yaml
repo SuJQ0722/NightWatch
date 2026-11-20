@@ -1,0 +1,184 @@
+# Shared defaults. Every other config `extends: base`. Override anything with --set a.b=value.
+experiment: null          # output folder under runs/ (default: config name)
+seed: 0
+repeats: 3                # each (task, method) is run this many times; report medians and CIs
+workers: 1                # parallel environments (one OSWorld container each)
+worker_stagger_s: 5
+
+env:
+  kind: osworld           # osworld | sim
+  osworld:
+    provider: null        # null = OSWORLD_PROVIDER (.env): docker | ags | aws | ...
+    path_to_vm: null      # default data/vm/Ubuntu.qcow2 (scripts/setup_container.sh vm)
+    screen_size: [1920, 1080]
+    client_password: ""   # "" = OSWorld default for the provider
+    ags_grab: null        # AGS frame stream: null = OSWORLD_AGS_GRAB (default daemon) | daemon (guest capture process, 10 Hz) | run_python (one python3 per frame, ~3 Hz)
+  sim:
+    steps: 3
+
+tasks:                    # OSWorld task list (paths relative to third_party/OSWorld)
+  meta: ../../configs/tasks/osworld_100.json      # the 100 OSWorld-Verified tasks of the experiments
+  domains: null           # null = all
+  per_domain: null        # sample k tasks per domain (seeded)
+  sample: null            # sample k tasks from the whole (filtered) list (seeded)
+  ids: null
+  limit: null
+
+agent:
+  kind: prompt            # prompt = OSWorld PromptAgent (screenshot -> pyautogui) with a streaming, cancellable call_llm
+                          # qwen35 = OSWorld Qwen3.5-VL agent (branch dev_djlu/qwen35vl_agent), same transport; its own defaults
+  observation_type: screenshot
+  max_trajectory_length: 3
+  cancellable: true       # false = interrupts degrade to "let it finish, then invalidate"
+  obs_size: null          # [w, h]: screenshot size sent to the model, its clicks are mapped back to the screen (null = as is)
+  # model / max_tokens / temperature / top_p: from .env (AGENT_*), overridable here
+
+system1:
+  backend: null           # null = SYSTEM1_BACKEND from .env (default http = perception server)
+
+episode:                  # identical for every method (OSWorld lib_run_single.py values); excluded from loop time
+  settle_after_reset_s: 60
+  settle_before_eval_s: 20
+  eval_timeout_s: 900      # an evaluator that has not returned by then is an error (retried) and the env is rebuilt
+
+limits:
+  max_steps: 50           # executed steps; interrupted / invalidated generations are not steps
+  max_vlm_calls: 120      # all VLM calls including interrupted ones
+  max_loop_s: 3600
+  max_interrupts_per_step: 2
+  max_invalidations_per_step: 2
+  cancel_join_s: 10
+
+frames:
+  hz: 10                  # frame stream rate (a method may set frames_hz; achieved fps is logged)
+  record: false           # write frames to disk (measurement / pilot / calibration runs)
+  save_obs: false         # keep every screenshot the agent receives (obs/), referenced per step in steps.jsonl
+  record_quality: 85
+  record_max_side: null   # e.g. 960 to halve recording size
+
+stage1:
+  small_width: 480        # stage-1 works on 480-px grayscale frames
+  pix_thresh: 16
+  min_frac: 0.0004        # minimum changed fraction to count as a change (AOI uses 0.01 for keyframes)
+  min_area: 6             # components smaller than this (in small pixels) are carets / cursor blinks
+  benign_learn_max_frac: 0.02   # largest region System-1 may mark benign (share of the screen); reset at every action
+  benign_regions:         # normalised [x0, y0, x1, y1]; Ubuntu top-bar clock
+    - [0.44, 0.0, 0.56, 0.035]
+
+step_types:
+  stale_px: 0.05          # target region changed by >= 5% between the agent's screenshot and dispatch
+  no_effect_frac: 0.0005  # screen changed by < 0.05% between dispatch and the next observation
+
+# ------------------------------------------------------------------------------------------------ methods
+method_defaults:
+  post: fixed             # after-execution waiter: fixed | pixel | a11y | clip | nightwatch
+  sleep: 2.0              # fixed: seconds after each action (DesktopEnv.step default pause)
+  interrupt: false        # checkpoint 1: interrupt the VLM while it reasons
+  invalidate: false       # checkpoint 2: invalidate a pending action before execution
+  stage1: true            # pixel-diff gate in front of System-1
+  crop: true              # send the change-region crop
+  bank_size: 16           # 4 | 8 | 12 | 16 questions (priority order, questions.py)
+  system1: null           # per-method System-1 backend override (observer comparisons)
+  strip_sleep: false      # drop the agent's own fixed waits: before the first / after the last action, sleep-only snippets
+  sleep_cap_s: 0.5        # (strip_sleep) cap on a time.sleep between two actions of one snippet (OSWorld's prompt asks for 0.5)
+  post_cfg:
+    quiet_s: 0.6          # pixel quiet time before waking (10 Hz stream; 0.4 at 3 Hz woke ~1.1 s after the last change,
+                          # 0.6 at 10 Hz ~0.75 s: vanilla streams show 1.8 % of changing steps pause 0.7 s, then change)
+    optimistic: true      # nightwatch waiter: wake on pixel quiet, System-1 off the critical path (events / loading only)
+    no_effect_timeout_s: 0.6  # no visible change this long after the action -> no effect (10 Hz streams: a first change
+                          # later than 0.6 s in 0.65 % of actions, later than 1.0 s in 0.54 %)
+    wait_action_s: 3.0    # after the agent's own WAIT
+    max_wait_s: 10.0
+    stuck_s: 8.0
+    long_op_max_s: 30.0
+    probe_every_s: 1.0    # forced System-1 probe even without pixel change (static "Loading..." pages)
+    full_min_interval_s: 0.0  # (with s1_wake) min gap between full post-exec checks while waiting: back-to-back full
+                          # checks from every worker saturate the shared GPU and slow the fast tier that decides the wake
+    event_quiet_s: 0.15
+    s1_wake: false        # fast stability tier: System-1's "settled" on each new quiet frame may wake before quiet_s /
+                          # no_effect_timeout_s (only fast_questions: ~90 ms vs ~480 ms for the full post-exec set)
+    wake_tau: 0.99        # settled probability that wakes (with loading under its threshold)
+                          # on held-out tasks: no change at 0.3 s wakes 93% of final screens, 0.5% too early
+    min_quiet_s: 0.3      # after a change: quiet this long before the first fast check (training data: 3 Hz, k = 1)
+    noeff_min_s: 0.3      # no change: this long after the action before the first fast check
+    fast_questions: [settled, loading]   # still_changing is about the past half second: it blocks the first quiet frame
+    event_max_delay_s: 1.0
+    target_half: 80
+    crop_pad: 24
+    crop_min: 160
+    clip_dist: 0.02
+  rules:
+    thresholds: {}        # per-question fire thresholds; default_tau otherwise
+    default_tau: 0.5
+    invalidate_tau: 0.8   # floor for invalidation only
+    benign_tau: 0.6
+    calibration: data/calibration/thresholds.json   # used when present (python -m nightwatch calibrate)
+    min_interval_s: 1.0   # Zeno avoidance: minimum gap between interrupts
+    interrupt_on: [dialog, error, page_changed]
+    invalidate_on: [target_present, target_occluded, target_changed, dialog]
+    invalidate_untargeted: [dialog, error, toast, page_changed]
+    invalidate_keep_history: true   # agents with action feedback keep what they saw; the action is reported "not executed"
+    wake_on: [dialog, error, toast]
+
+methods:
+  # ---- fixed rhythm (the official default and the sweep)
+  fixed_default: {post: fixed, sleep: 2.0}     # DesktopEnv.step(pause=2); run.py's own default is 0 (= fixed_0)
+  fixed_0: {post: fixed, sleep: 0.0}
+  fixed_0.5: {post: fixed, sleep: 0.5}
+  fixed_1: {post: fixed, sleep: 1.0}
+  fixed_2: {post: fixed, sleep: 2.0}
+  fixed_3: {post: fixed, sleep: 3.0}
+  fixed_5: {post: fixed, sleep: 5.0}
+  # ---- non-semantic stability detection
+  pixel_stable: {post: pixel}
+  a11y_stable: {post: a11y}                   # AndroidWorld-style: a11y tree identical 3x at 0.5 s
+  clip_stable: {post: clip}                   # CLIP embedding distance (needs the perception server)
+  # ---- AOI (arXiv 2606.29472) on OSWorld: same PromptAgent, plus AOI's perception layer: inter-step keyframes from
+  #      AOI's own extractor (3 Hz stream, pixel gate, CLIP ViT-B/16 theta 0.04, <= 5 per step) + visual narration;
+  #      AOI's fixed post-action buffer (post_action_buffer_ms = 500)
+  aoi_visual: {post: fixed, sleep: 0.5, keyframes: aoi, frames_hz: 3}   # AOI's own 3 Hz sampling
+  # ---- PUSV (arXiv 2604.18860) on OSWorld: the official rhythm (fixed_0) plus PUSV's pre-execution check before every
+  #      click (patch SSIM < 0.92 / global diff > 0.2 % / new alert window in wmctrl): an aborted click is re-decided
+  pusv: {post: fixed, sleep: 0.0, validate: pusv}
+  # ---- ours
+  nightwatch_post: {post: nightwatch, strip_sleep: true}                                         # checkpoint 3 only
+  nightwatch_post_inv: {post: nightwatch, invalidate: true, strip_sleep: true}                    # + checkpoint 2
+  nightwatch: {post: nightwatch, interrupt: true, invalidate: true, strip_sleep: true}            # all three checkpoints
+  # ---- ablations
+  nightwatch_keep_sleep: {base: nightwatch, strip_sleep: false}               # the agent's sleeps run as written
+  nightwatch_sync_wake: {base: nightwatch, post_cfg: {optimistic: false}}     # wait for System-1 to judge the quiet screen
+  fixed_default_strip: {base: fixed_default, strip_sleep: true}           # fixed 2 s, agent sleeps removed
+  nightwatch_no_interrupt: {base: nightwatch, interrupt: false}
+  nightwatch_no_invalidate: {base: nightwatch, invalidate: false}
+  nightwatch_fixed_post: {base: nightwatch, post: fixed, sleep: 2.0}           # keep interrupt + invalidate, fixed sleep after
+  nightwatch_no_stage1: {base: nightwatch, stage1: false}                      # every frame goes to System-1
+  nightwatch_no_crop: {base: nightwatch, crop: false}
+  nightwatch_uncalibrated: {base: nightwatch, rules: {calibration: null}}      # every threshold 0.5
+  nightwatch_q4: {base: nightwatch, bank_size: 4}
+  nightwatch_q8: {base: nightwatch, bank_size: 8}
+  nightwatch_q12: {base: nightwatch, bank_size: 12}
+  # ---- observer comparisons (same rules, different System-1)
+  nightwatch_obs_frontier: {base: nightwatch, system1: frontier}
+  nightwatch_obs_logprob: {base: nightwatch, system1: logprob}
+  nightwatch_obs_jev: {base: nightwatch, system1: jev}
+  # ---- decision-model comparison: one perception server per model (scripts/serve_system1.sh, port convention below)
+  #      zero-shot 871x, SFT 872x, SFT+RL 873x;  x = 1 d3-mini (4B), 2 d3-lite (0.8B), 3 Intern-Decision-0.8B
+  #      d3 models list a second replica at port + 40 (scripts/serve_models.sh with two GPUs per model); a replica
+  #      that is not running is skipped
+  nightwatch_d3mini: {base: nightwatch, system1: "http://127.0.0.1:8711,http://127.0.0.1:8751"}
+  nightwatch_d3lite: {base: nightwatch, system1: "http://127.0.0.1:8712,http://127.0.0.1:8752"}
+  nightwatch_intern08: {base: nightwatch, system1: "http://127.0.0.1:8713"}
+  nightwatch_d3mini_sft: {base: nightwatch, system1: "http://127.0.0.1:8721,http://127.0.0.1:8761"}
+  nightwatch_d3lite_sft: {base: nightwatch, system1: "http://127.0.0.1:8722,http://127.0.0.1:8762"}
+  nightwatch_d3lite_sft_s1wake: {base: nightwatch_d3lite_sft, post_cfg: {s1_wake: true}}   # System-1 decides the wake
+  # the same with the released watcher (hindsight "settled" labels): full checks
+  # on 8782/8783, the fast tier on its own replicas 8772/8773 (sharing one replica, it queued ~1.3 s behind full checks;
+  # one process per replica, since concurrent requests in one server slow each other down through the GIL)
+  nightwatch_d3lite_settle_s1wake: {base: nightwatch_d3lite_sft_s1wake, system1: "http://127.0.0.1:8782,http://127.0.0.1:8783",
+                                  system1_fast: "http://127.0.0.1:8772,http://127.0.0.1:8773",
+                                  system1_fast_max_side: 768,   # settle_ds2 images (the "settled" head); 1280: 3-4x slower
+                                  post_cfg: {full_min_interval_s: 0.5}}
+  nightwatch_intern08_sft: {base: nightwatch, system1: "http://127.0.0.1:8723"}
+  nightwatch_d3mini_rl: {base: nightwatch, system1: "http://127.0.0.1:8731,http://127.0.0.1:8771"}
+  nightwatch_d3lite_rl: {base: nightwatch, system1: "http://127.0.0.1:8732,http://127.0.0.1:8772"}
+  nightwatch_intern08_rl: {base: nightwatch, system1: "http://127.0.0.1:8733"}

@@ -1,0 +1,2 @@
+# Local monitor config; never commit .env (use .env.example for templates).
+.env

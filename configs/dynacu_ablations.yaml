@@ -1,0 +1,21 @@
+# DynaCU-Bench ablations of NightWatch (49 tasks x 3, same agent, tasks and limits as configs/dynacu.yaml).
+# Control schemes replace the decision layer; intervention arms remove one intervention at a time.
+# watcher_d3_27b needs the D3 FP8 service (D3_VLLM_URL); run it alone with one worker per server:
+#   python -m nightwatch run --config dynacu_ablations --methods watcher_d3_27b --workers 1
+extends: dynacu
+experiment: dynacu_ablations
+methods:
+  # ---- control schemes
+  pixel_rules: {post: pixel, interrupt: true, invalidate: true, pixel_rules: true, system1: none}
+  watcher_jev: {base: nightwatch_full, system1: jev, system1_fast: jev}
+  watcher_d3_27b: {base: nightwatch_full, system1: d3_vllm, system1_fast: d3_vllm}
+  watcher_d3lite_zero:
+    base: nightwatch_full
+    system1: "http://127.0.0.1:8812,http://127.0.0.1:8813"
+    system1_fast: "http://127.0.0.1:8822,http://127.0.0.1:8823"
+  # ---- interventions
+  nightwatch_no_wake: {base: nightwatch_full, post_cfg: {s1_wake: false}}
+  nightwatch_no_interrupt: {base: nightwatch_full, interrupt: false}
+  nightwatch_no_void: {base: nightwatch_full, invalidate: false}
+run_methods: [fixed_aoi, pixel_rules, watcher_jev, watcher_d3lite_zero, nightwatch_no_wake, nightwatch_no_interrupt,
+              nightwatch_no_void, nightwatch_full]

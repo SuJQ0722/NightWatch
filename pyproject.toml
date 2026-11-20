@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nightwatch"
+version = "0.1.0"
+description = "NightWatch: proactive perception for computer-use agents."
+requires-python = ">=3.11"
+# Light on purpose: the package is installed in both the harness env (with OSWorld's pinned stack)
+# and the System-1 env (torch / transformers 5.x for Intern-Decision). Heavy deps come from setup_env.sh.
+dependencies = ["numpy", "pillow", "pyyaml", "httpx>=0.24", "scipy"]
+
+[project.optional-dependencies]
+report = ["matplotlib", "pandas"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+nightwatch = "nightwatch.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]  # the `training` package at the repo root
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = ["slow: end-to-end tests on the simulated desktop (real time, ~1 min)"]

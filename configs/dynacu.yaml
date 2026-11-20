@@ -1,0 +1,42 @@
+# DynaCU-Bench (AOI, arXiv 2606.29472): the 49 dynamic tasks without audio, three repeats, headless Chromium
+# (no VM, no docker). Agent = AOI's own `standard` protocol (screenshot + trajectory text, NARRATION/ACTION),
+# with MiMo-v2.6-flash through a streaming, cancellable call. All methods receive screenshots only: AOI's DOM
+# element list is removed before it reaches the agent. The watcher and its thresholds are the OSWorld ones
+# (no DynaCU tuning).
+extends: base
+experiment: dynacu
+repeats: 3
+workers: 3
+env:
+  kind: dynacu
+  dynacu:
+    screen_size: [1280, 720]
+    gt_probe: false              # weak ground truth from page instrumentation (recording / analysis runs)
+    judge: null                  # null = DYNACU_JUDGE (default gemini-2.0-flash, AOI's judge); 7 hybrid/LLM tasks only
+tasks:
+  subset: visual                 # visual (49 dynamic tasks without audio) | static (Static-50) | audio (51) | dynamic | all
+  categories: null               # e.g. [D, F]
+  ids: null
+  limit: null
+agent: {kind: aoi, cancellable: true}
+frames:
+  record: false                 # screenshots only (frames.save_obs); set true to record the frame stream
+  save_obs: true                # retain the screenshots received by the agent
+  record_quality: 75
+  record_max_side: 960
+episode: {settle_after_reset_s: 1.0, settle_before_eval_s: 0}    # AOI waits 1 s after page load
+limits: {max_steps: 50, max_vlm_calls: 120, max_loop_s: 600}     # same 50 as OSWorld (AOI default is 15); task duration_s also applies
+stage1:
+  benign_regions: []
+method_defaults:
+  first_obs_wait: 0
+methods:
+  fixed_aoi: {post: fixed, sleep: 2.0, first_obs_wait: 2.0}      # AOI `standard`: one step_interval before every observation
+  # PUSV (arXiv 2604.18860) on the same rhythm: SSIM around the click + global pixel change before every click
+  # (L1, L2a); L2b checks OS-level alert windows, which a single browser page does not have
+  pusv: {post: fixed, sleep: 2.0, first_obs_wait: 2.0, validate: pusv}
+  # Vanilla and AOI run in AOI's own harness, unmodified (AOI without its DOM element list)
+  standard: {native_mode: standard}                              # Vanilla
+  aoi_visual_no_dom: {native_mode: aoi_visual, native_no_dom: true}
+  nightwatch_full: {base: nightwatch_d3lite_settle_s1wake}
+run_methods: [standard, aoi_visual_no_dom, pusv, nightwatch_full]

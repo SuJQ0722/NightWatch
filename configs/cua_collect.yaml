@@ -1,0 +1,15 @@
+# Desktop (CUA) training data for the decision model: MiMo on the generated training task pool
+# (training/data/cua_tasks.py, disjoint from every OSWorld task) with the frame stream and the agent's screenshots
+# recorded; training/data/cua_build.py turns the recordings into teacher-labelled requests. Never a result.
+extends: base
+experiment: cua_collect
+repeats: 1
+workers: 12
+tasks:
+  meta: ../../data/cua_train/train_tasks.json     # relative to third_party/OSWorld
+  examples_dir: data/cua_train/tasks              # relative to the repo root
+  per_domain: null
+episode: {settle_after_reset_s: 15, settle_before_eval_s: 0, eval_timeout_s: 60}
+limits: {max_steps: 20, max_vlm_calls: 40, max_loop_s: 600}
+frames: {hz: 3, record: true, record_max_side: 1280, save_obs: true}
+run_methods: [fixed_0]
