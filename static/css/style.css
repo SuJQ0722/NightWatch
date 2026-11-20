@@ -126,7 +126,7 @@ h2.band {
 .demo-text p { margin: 0 0 8px; }
 .demo-text .src { color: var(--muted); font-size: 14px; }
 
-.fig img { width: 100%; height: auto; display: block; border-radius: 10px; }
+.fig img { width: 100%; height: auto; display: block; border-radius: 10px; mix-blend-mode: multiply; }  /* white figure backgrounds take the card colour */
 
 /* citation */
 .bib { position: relative; }
