@@ -7,6 +7,15 @@
   <meta name="description" content="NightWatch gives any computer-use (GUI) agent proactive perception: a 0.8B Jev-style System-1 decision model watches the screen and interrupts stale reasoning, voids stale clicks, and wakes the agent as soon as the screen settles. -33% non-reasoning time on OSWorld-Verified, 39.5 to 44.2% success on DynaCU-Bench.">
   <meta name="keywords" content="NightWatch, computer-use agent, CUA, GUI agent, desktop agent, proactive perception, System-1, System-1 decision model, Jev, Jev-style, Jev System-1, watcher model, OSWorld, OSWorld-Verified, DynaCU-Bench, AOI, PUSV, interrupt, void, wake, stale action, perception-action gap, Hermes Agent plugin, MiMo, vision-language model">
   <meta name="author" content="Jiaqi Su, Jiejing Shao, Yichen Liu, Longkai Huang, Haiyan Yin">
+  <meta name="citation_title" content="Don't Sleep, Keep Watch: Proactive Perception for Computer-Use Agents">
+  <meta name="citation_author" content="Su, Jiaqi">
+  <meta name="citation_author" content="Shao, Jie-Jing">
+  <meta name="citation_author" content="Liu, Yichen">
+  <meta name="citation_author" content="Huang, Long-Kai">
+  <meta name="citation_author" content="Yin, Haiyan">
+  <meta name="citation_publication_date" content="2026/11/21">
+  <meta name="citation_arxiv_id" content="2611.28947">
+  <meta name="citation_pdf_url" content="https://arxiv.org/pdf/2611.28947">
   <link rel="canonical" href="https://sujq0722.github.io/NightWatch/">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://sujq0722.github.io/NightWatch/">
@@ -23,7 +32,8 @@
     "@context": "https://schema.org",
     "@graph": [
       {"@type": "ScholarlyArticle", "headline": "Don't Sleep, Keep Watch: Proactive Perception for Computer-Use Agents",
-        "url": "https://sujq0722.github.io/NightWatch/", "image": "https://sujq0722.github.io/NightWatch/static/images/nightwatch-banner.png", "datePublished": "2026-11",
+        "url": "https://sujq0722.github.io/NightWatch/", "image": "https://sujq0722.github.io/NightWatch/static/images/nightwatch-banner.png", "datePublished": "2026-11-21",
+        "sameAs": "https://arxiv.org/abs/2611.28947",
         "keywords": "computer-use agent, GUI agent, proactive perception, System-1 decision model, Jev, OSWorld, DynaCU-Bench",
         "author": [
           {"@type": "Person", "name": "Jiaqi Su", "affiliation": "National University of Singapore"},
@@ -64,7 +74,7 @@
     <span><sup>4</sup>Hong Kong Baptist University</span>
   </p>
   <nav class="buttons">
-    <a class="btn disabled" aria-disabled="true" title="coming soon"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 2.5h8l4.5 4.5v14.5H6zM14 2.5V7h4.5M9 12h7M9 16h7"/></svg>Paper <small>(soon)</small></a>
+    <a class="btn" href="https://arxiv.org/abs/2611.28947"><svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 2.5h8l4.5 4.5v14.5H6zM14 2.5V7h4.5M9 12h7M9 16h7"/></svg>Paper <small>(arXiv)</small></a>
     <a class="btn" href="https://github.com/SuJQ0722/NightWatch"><svg class="ico" viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Code</a>
     <a class="btn" href="https://huggingface.co/nullptr04/NightWatch-0.8B"><span class="ico">🤗</span>Model</a>
     <a class="btn" href="https://huggingface.co/datasets/nullptr04/NightWatch-Data"><span class="ico">🤗</span>Data</a>
@@ -280,11 +290,14 @@
   <h2 class="band band-mon">Citation</h2>
   <div class="card dashed bib">
     <button class="copy" type="button">Copy</button>
-<pre><code>@article{su2026nightwatch,
-  title  = {Don't Sleep, Keep Watch: Proactive Perception for Computer-Use Agents},
-  author = {Su, Jiaqi and Shao, Jiejing and Liu, Yichen and Huang, Longkai and Yin, Haiyan},
-  year   = {2026},
-  note   = {arXiv preprint, coming soon}
+<pre><code>@misc{su2026dontsleepwatchproactive,
+  title         = {Don't Sleep, Keep Watch: Proactive Perception for Computer-Use Agents},
+  author        = {Jiaqi Su and Jie-Jing Shao and Yichen Liu and Long-Kai Huang and Haiyan Yin},
+  year          = {2026},
+  eprint        = {2611.28947},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL},
+  url           = {https://arxiv.org/abs/2611.28947}
 }</code></pre>
   </div>
 </section>
